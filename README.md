@@ -1,6 +1,6 @@
 ![](/assets/preview.gif)
 
-# Intelli-prompt. (Beta)
+# Intelli-prompt.
 
 The assistant suggests prompts for you. It was created from some of my random ideas. (❁´◡`❁)
 
@@ -52,7 +52,7 @@ lora.<lora_name>::<strength>
 ti.<textual_inversion_name>::<strength>
 ```
 
-## Build a custom IntelliRule. (Experiment)
+## Build a custom IntelliRule. 
 This guide provides step-by-step instructions on creating a custom IntelliRule, either building from the base `IntelliRule` or the pre-built `KeywordIntelliRule`. Both approaches allow you to tailor the IntelliRule to your specific needs.
 
 Note: this guide may not be correct. See also the [IntelliRule documentation](docs/intelli.md).
@@ -200,7 +200,7 @@ def custom_rule_init():
 script_callbacks.on_before_ui(custom_rule_init)
 ```
 
-Certainly, there may be many changes in the future, so this guide is only relatively accurate. Partly due to language differences, there might be some parts that are hard to understand; please bear with me.
+This guide is only relatively accurate. Partly due to language differences, there might be some parts that are hard to understand; please bear with me.
 
 If you have any difficulty, do not hesitate to ask me, I may not reply often but I will try to help you. 
 ☆*: .｡. o(≧▽≦)o .｡.:*☆
