@@ -1,0 +1,36 @@
+:root {
+    --intelli-select-background-color: #38393d
+}
+
+.auto-complete-container {
+    position: absolute;
+    display: none;
+    flex-direction: column;
+    border: var(--input-border-width) solid var(--input-border-color);
+    border-radius: 6px;
+    z-index: 999;
+    background-color: var(--body-background-fill);
+    padding: 4px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: 250px;
+}
+
+.auto-complete-container textarea {
+    line-height: 1.5;
+}
+.auto-complete-container .tag-element {
+    min-width: 150px;
+    margin: 2px;
+    padding: 2px;
+}
+
+.auto-complete-container .tag-element.select {
+    background-color: var(--intelli-select-background-color);
+    border-radius: 6px;
+}
+
+.auto-complete-container .tag-element:hover {
+    background-color: var(--intelli-select-background-color);
+    border-radius: 6px;
+}

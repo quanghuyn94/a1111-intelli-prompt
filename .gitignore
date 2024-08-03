@@ -1,0 +1,8 @@
+__pycache__
+*.ckpt
+*.safetensors
+*.pth
+/test.ipynb
+/.vscode
+IntelliPrompt.json
+intelli_config.json
