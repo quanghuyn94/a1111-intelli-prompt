@@ -1,9 +1,12 @@
-let promptHistory = [];
+let promptHistoryStack = [];
 const INTELLI_HOTKEY_OPTS = {
     "move_up" : "ArrowUp",
     "move_down" : "ArrowDown",
+    "move_left" : "ArrowLeft",
+    "move_right" : "ArrowRight",
     "close_suggetion_table" : "Escape",
-    "complete_keyword": "Tab"
+    "complete_keyword": "Tab",
+    "undo": "z"
 }
 /**
  * Selects an item in the suggestion container at the specified index.
@@ -151,6 +154,19 @@ class AutoCompleteField {
                 return;
             }
 
+            if (e.key == INTELLI_HOTKEY_OPTS["move_right"] && autoCompleteContainer.style.display == "flex") {
+                e.preventDefault();
+                autoCompleteContainer.childNodes[_selectIndex].leftInput(autoCompleteContainer.childNodes[_selectIndex]);
+                return;
+            }
+
+            if (e.key == INTELLI_HOTKEY_OPTS["undo"] && e.ctrlKey) {
+                if (promptHistoryStack.length > 0) {
+                    textarea.value = promptHistoryStack.pop();
+                    updateInput(textarea);
+                }
+            }
+
             select(autoCompleteContainer, _selectIndex);
             scrollToSelectedElement(autoCompleteContainer);
         })
@@ -177,7 +193,6 @@ class AutoCompleteField {
         textarea.addEventListener("blur", (e) => {
             _focus = false;
         });
-        
 
         document.addEventListener("click", (e) => {
 
@@ -229,6 +244,7 @@ async function completeKeywords(key) {
  */
 function suggestionWord(k, textarea, autoCompleteContainer, tags) {
     // Get the pixel position of the cursor within the textarea
+
     var cursorPixelPosition = TextareaCaretCoordinatesUtils.getCaretCoordinates(textarea, textarea.selectionEnd);
 
     // Display the auto-complete container
@@ -249,33 +265,75 @@ function suggestionWord(k, textarea, autoCompleteContainer, tags) {
         const tagElement = document.createElement("div");
 
         tagElement.innerText = tags[index];
+        let tag = tags[index];
+        var tagText = tag[0];
+        var tagHighlight = tag[1];
+        tagElement.innerText = tagText;
+        tagElement.style.color = tagHighlight;
         tagElement.classList.add("tag-element");
         autoCompleteContainer.appendChild(tagElement);
 
         // Attach a click event listener to each tag element
         tagElement.addEventListener('click', (e) => {
+            
             if (autoCompleteContainer.style.display == "flex") {
                 textarea.focus();
 
                 // Get the selected tag and complete the keyword in the textarea
+                /**
+                 * @type {string}
+                 */
                 var tag = e.target.innerText;
+
+                if (tag.includes("error")) {
+                    return;
+                }
+
                 completeKeywords(tag).then((response) => {
+                    
                     replaceWordAtCursor(textarea, response, opts['intelli_word_padding']);
                 })
 
                 // Hide the auto-complete container after selection
                 autoCompleteContainer.style.display = "none";
 
-                promptHistory.push(textarea.value)
+                promptHistoryStack.push(textarea.value);
             }
 
+            
         });
+
+        tagElement.leftInput = (element) => {
+            if (autoCompleteContainer.style.display == "flex") {
+                textarea.focus();
+
+                // Get the selected tag and complete the keyword in the textarea
+                /**
+                 * @type {string}
+                 */
+                var tag = element.innerText;
+
+                if (tag.includes("error")) {
+                    return;
+                }
+
+                replaceWordAtCursor(textarea, tag, opts['intelli_word_padding']);
+                promptHistoryStack.push(textarea.value);
+            }
+            
+        }
     }
 
     // Select the first suggestion in the auto-complete container
     select(autoCompleteContainer, 0);
 }
 
+function pushHistory(textarea) {
+    promptHistoryStack.push(textarea.value);
+    if (promptHistoryStack.length > opts['intelli_max_history']) {
+        promptHistoryStack.shift();
+    }
+}
 /**
  * Asynchronously suggests keywords for a given input and updates the auto-complete container.
  *
@@ -287,12 +345,12 @@ function suggestionWord(k, textarea, autoCompleteContainer, tags) {
 async function suggestionWordAsync(k, textarea, autoCompleteContainer) {
     let response = await getKeywords(k, opts['intelli_max_result']);
 
-        // If no suggestions are received, hide the auto-complete container and return
-        if (response.length < 1) {
-            autoCompleteContainer.style.display = "none";
-            return;
-        };
+    // If no suggestions are received, hide the auto-complete container and return
+    if (response.length < 1) {
+        autoCompleteContainer.style.display = "none";
+        return;
+    };
 
-        // Display suggestions in the auto-complete container
-        suggestionWord(k, textarea, autoCompleteContainer, response);
+    // Display suggestions in the auto-complete container
+    suggestionWord(k, textarea, autoCompleteContainer, response);
 }

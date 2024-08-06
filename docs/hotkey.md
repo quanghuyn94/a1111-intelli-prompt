@@ -2,7 +2,8 @@
 
 | Key         | Description                                  |
 |----------------|----------------------------------------------|
-| ↑ and ↓        | Navigate between suggestions                 |
-| Tab or click   | Auto-complete                                |
-| Esc            | Close suggestion content                     |
-| Ctrl + Space   | Open suggestion content                      |
+| `↑` and `↓`        | Navigate between suggestions                 |
+| `Tab` or `click`  | Auto-complete                                |
+| `Esc`            | Close suggestion content                     |
+| `Ctrl` + `Space`   | Open suggestion content                      |
+| `→`| Fill with current suggestion |

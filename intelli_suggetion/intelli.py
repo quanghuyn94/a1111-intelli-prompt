@@ -28,11 +28,24 @@ class IntelliRule:
         Returns:
         - list or None: A list of components if key contains '.', otherwise None.
         """
-
-        if "." not in key:
+        if '.' not in key:
             return None
         
-        return key.split(".")
+        if "::" not in key:
+            return key.split('.') + [None]
+        
+        if key.count('::') > 1:
+            return ['error', 'Syntax error', 'More than one ::']
+        
+        part1, part2 = key.split('::')
+        part1_split = part1.split('.')
+        part2_float = part2
+
+        if '.' not in part1:
+            part1_split = [None] + part1_split
+        
+        return part1_split + [part2_float]
+
 
     def intelli(self, key: str, max_result: int):
         """
@@ -59,6 +72,19 @@ class IntelliRule:
         """
         pass
 
+    def get_highlight(self, key: str) -> str:
+        """
+        Placeholder method for getting the highlight for the given key.
+
+        Parameters:
+        - key (str): The hierarchical key to be highlighted.
+
+        Returns:
+        - str: The highlighted key.
+        """
+
+        return "#FFFFFF"
+
     def remove_rule_name(self, key : str):
         """Remove the rule name from the key.
 
@@ -84,7 +110,7 @@ class KeywordIntelliRule(IntelliRule):
     - complete(self, key: str): Completes the provided key based on rule specifications.
     """
 
-    keywords = []
+    keywords : list[str] = []
 
     def __init__(self, name, rule_id):
         """
@@ -110,16 +136,13 @@ class KeywordIntelliRule(IntelliRule):
         params = self.get_params(key)
 
         if params:
-            if "::" in params[1]:
-                return [key]
+            
 
             result = []
             found = []
-            query = params[1]
+            query, strength = params[1], params[2]
 
             for keyword in self.keywords:
-                if len(result) + len(found) > max_result:
-                    break
 
                 found, result, skip = self.on_search(query, keyword, found, result)
 
@@ -130,14 +153,16 @@ class KeywordIntelliRule(IntelliRule):
                     found.insert(0, f"{self.rule_command}.{keyword}")
                     continue
                 
-                if query.startswith(keyword):
+                if keyword.startswith(query):
                     found.append(f"{self.rule_command}.{keyword}")
                     continue
                 
                 if utils.is_subsequence(query, keyword) == True:
                     result.append(f"{self.rule_command}.{keyword}")
 
-            return found + result
+            if strength:
+                return [(f"{x}::{strength}", self.get_highlight(x)) for x in found + result][0:max_result]
+            return [(x, self.get_highlight(x)) for x in found + result][0:max_result]
 
         return []
 
@@ -175,8 +200,101 @@ class KeywordIntelliRule(IntelliRule):
 
         return f"{key} "
 
+class MapKeywordIntelliRule(IntelliRule):
+    """
+    A rule class for intelligent keyword-based completion.
+    This rule store the keyword with the count.
+    Result will be sorted by the count.
 
-    
+    Attributes:
+    - keywords (list): A list to store keywords for intelligent completion.
+
+    """
+    keywords : list[tuple[str, int]] = []
+    def __init__(self, name, rule_id):
+        """
+        Initializes an instance of KeywordIntelliRule.
+
+        Args:
+        - name (str): The name of the rule.
+        - rule_id (int): The unique identifier for the rule.
+        """
+        super().__init__(name, rule_id)
+
+    def intelli(self, key : str, max_result : int):
+        """
+        Performs intelligent completion based on keywords.
+
+        Args:
+        - key (str): The input key for completion.
+        - max_result (int): The maximum number of results to return.
+
+        Returns:
+        A list of completion results.
+        """
+        params = self.get_params(key)
+        map_firts_found = []
+        map_level_1 = []
+        map_level_2 = []
+        map_found = [] 
+        if params:
+
+            query, strength = params[1], params[2]
+            
+            for (keyword, count) in self.keywords:
+                if query == keyword:
+                    map_firts_found.append((f"{self.rule_command}.{keyword}", count))
+                    continue
+                
+                if keyword.startswith(query):
+                    # found.append(f"{self.rule_command}.{keyword}")
+                    map_level_1.append((f"{self.rule_command}.{keyword}", count))
+                    continue
+                
+                if query in keyword:
+                    map_level_2.append((f"{self.rule_command}.{keyword}", count))
+                    continue
+
+                if utils.is_subsequence(query, keyword) == True:
+                    # result.append(f"{self.rule_command}.{keyword}")
+                    map_found.append((f"{self.rule_command}.{keyword}", count))
+
+            map_found.sort(key=lambda x: x[1], reverse=True)
+            map_level_1.sort(key=lambda x: x[1], reverse=True)
+            map_level_2.sort(key=lambda x: x[1], reverse=True)
+            map_firts_found.sort(key=lambda x: x[1], reverse=True)
+
+            result_map = map_firts_found + map_level_1 + map_level_2 + map_found
+            if strength:
+                return [(f"{x[0]}::{strength}", self.get_highlight(x[0])) for x in result_map][0:max_result]
+            return [(x[0], self.get_highlight(x[0])) for x in result_map][0:max_result]
+
+        return []
+
+    def complete(self, key: str):
+        """
+        Completes the provided key based on rule specifications.
+
+        Args:
+        - key (str): The key to be completed.
+
+        Returns:
+        A completed string based on rule specifications.
+        """
+        key = self.remove_rule_name(key)
+
+        if "::" in key:
+            key, strength = key.split("::")
+
+            return f"({key}:{strength}) "
+
+        return f"{key} "
+
+RED_COLOR = "#FF0000"
+PINK_COLOR = "#FF00FF"
+GOLD = "#FFD700"
+DEFAULT_RULE = "intelli_danbooru"
+
 intelli_command_rules : dict[str, str] = {}
 idx2intelli_rules : dict[str, IntelliRule] = {}
 idx2intelli_rule_configs : dict[str, dict] = {}
@@ -193,24 +311,36 @@ def get_suggestion_rules(key: str, max_result: int):
     - list: A list of suggestion rules.
     """
     suggestion_rules = []
-
-    if len(key) < 1:
-        return list(intelli_command_rules.keys())[0:max_result]
+    if utils.check_syntax(key) != None:
+        return [(utils.check_syntax(key), RED_COLOR)]
     
-    for rule, rule_id in intelli_command_rules.items():
-        if len(suggestion_rules) > max_result:
-            break
+    if len(key) < 1:
+        return list([(x, GOLD) for x in intelli_command_rules.keys()])[0:max_result]
+    
+    if not "." in key:
+        for rule, rule_id in intelli_command_rules.items():
+            if len(suggestion_rules) > max_result:
+                break
+            if utils.is_subsequence(key, rule) == True:
+                suggestion_rules.append((rule, GOLD))
 
-        if "." in key:
+        if len(suggestion_rules)  < 1:
+            rule = idx2intelli_rules[DEFAULT_RULE]
+            suggestion_rules.extend(rule.intelli(f"{rule.rule_command}.{key}", max_result))
+
+    else:
+        for rule, rule_id in intelli_command_rules.items():
+            if len(suggestion_rules) > max_result:
+                break
+
             if key.split(".")[0] == rule:
                 suggestion_rules.extend(idx2intelli_rules[rule_id].intelli(key, max_result))
                 break
-        elif utils.is_subsequence(key, rule) == True:
-            suggestion_rules.append(rule)
+    
+                
+    if "::" in key and len(suggestion_rules) < 1:
+        suggestion_rules.insert(0, (key, PINK_COLOR))
 
-    if len(suggestion_rules) < 1 and "::" in key:
-        suggestion_rules = [key]
-        
     return suggestion_rules
 
 def get_suggestion_complete(key: str):

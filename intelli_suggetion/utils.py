@@ -23,3 +23,9 @@ def is_subsequence(sub, main):
         main_index += 1
 
     return False 
+
+def check_syntax(key : str):
+    if key.count("::") > 1:
+        return "error.Syntax Error: More than one '::' found."
+    
+    return None
