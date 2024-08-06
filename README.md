@@ -12,11 +12,13 @@ This is a relatively powerful suggestion system that will help you write prompt 
 
 - `Ctrl` + `Z` ¯\\_(ツ)_/¯
 - `→` Fill with current suggestion.
+
 ![](/assets/preview2.gif)
 - New Builtin Rule: `MapKeywordIntelliRule`.
 - Highlight System.
 - By default, `intelli_danbooru` is a auto suggestion without input name.
 - Now, you can input follow this:
+
 ![](/assets/preview3.gif)
 
 ## Used
