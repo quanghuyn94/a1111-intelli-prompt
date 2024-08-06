@@ -1,7 +1,7 @@
 # Build a custom IntelliRule. 
 This guide provides step-by-step instructions on creating a custom IntelliRule, either building from the base `IntelliRule` or the pre-built `KeywordIntelliRule`. Both approaches allow you to tailor the IntelliRule to your specific needs.
 
-Note: this guide may not be correct. See also the [IntelliRule documentation](docs/intelli.md).
+Note: this guide may not be correct. See also the [IntelliRule documentation](intelli.md).
 
 ### **Step 1:** Create you extension in stable-diffusion-webui extensions folder.
 
