@@ -102,8 +102,6 @@ def init():
     intelli.add_intelli_rules("ti", TextualInversionIntelliRule())
     print("Intelli Rules Loaded")
 
-    print(intelli.intelli_command_rules)
-
 def unload():
     intelli.idx2intelli_rules = {}
     intelli.intelli_command_rules = {}
