@@ -14,6 +14,14 @@ onUiUpdate(async () => {
             suggestionWordAsync(k, textarea, autoCompleteContainer).then();
         });
 
+        var txt2img_prompt_autocomplete = new AutoCompleteField(gradioApp().querySelector("#hires_prompt > label"), (k, textarea, autoCompleteContainer) => {
+            suggestionWordAsync(k, textarea, autoCompleteContainer).then();
+        });
+
+        var txt2img_n_prompt_autocomplete = new AutoCompleteField(gradioApp().querySelector("#hires_neg_prompt > label"), (k, textarea, autoCompleteContainer) => {
+            suggestionWordAsync(k, textarea, autoCompleteContainer).then();
+        });
+
         var img2img_prompt_autocomplete = new AutoCompleteField(gradioApp().querySelector("#img2img_prompt > label"), (k, textarea, autoCompleteContainer) => {
             suggestionWordAsync(k, textarea, autoCompleteContainer).then();
         });
