@@ -1,3 +1,11 @@
+# IntelliRule Syntax.
+
+Don't panic, it's not as difficult as learning how to code. This is what makes Intelli-prompt stand out. The syntax for Intelli-prompt consists of the following:
+
+- The most basic syntax: `<name>.<keyword>::<strength>`, where `name` is the name of... I can't think of a suitable name for it, but for now, let's understand it as the name of **"IntelliRule**". The `keyword` is the prompt you want, and `strength` is an **optional** parameter indicating the level of attention. For example, `dan.1girl::1.25`, where "dan" is the `name` of the Intellitor Danbooru, "1girl" is the `keyword`, and 1.25 is the `strength` of attention. Of course, you can write it like this: `dan.1girl`.
+
+- Other syntax: `<keyword>::<strength>`, use this syntax when you don't want to use any specific **"IntelliRule"**.
+
 # Build a custom IntelliRule. 
 This guide provides step-by-step instructions on creating a custom IntelliRule, either building from the base `IntelliRule` or the pre-built `KeywordIntelliRule`. Both approaches allow you to tailor the IntelliRule to your specific needs.
 
@@ -13,7 +21,7 @@ Let's create a stable-diffusion-webui extension project. Its structure will be a
 
 ### **Step 2:** Build your rule.
 
-#### Option 1: Build from Pre-built: `KeywordIntelliRule` (Recommended for beginners)
+#### Option 1: Build from Pre-built: `KeywordIntelliRule` or `MapKeywordIntelliRule` (Recommended for beginners)
 
 1. Import the Base Class
 
@@ -45,10 +53,6 @@ Let's create a stable-diffusion-webui extension project. Its structure will be a
     def intelli(self, key : str, max_result : int):
         # Optional: Your custom Intelli algorithm
         return your_result_list
-
-    def on_search(self, query : str, current_keyword : str, found : list, result : list):
-        # Optional: Define your on_search callback
-        return found, result, False  # Adjust as needed. (found, result, countine)
 
     def complete(self, key : str):
         # Optional: Implement custom completion algorithm
@@ -95,7 +99,7 @@ Let's create a stable-diffusion-webui extension project. Its structure will be a
     ```
 
 ### **Step 3:** Add your rule to `IntelliSystem`.
-1. Import [`add_intelli_rules`](/docs/intelli.md#function-add_intelli_ruleskey-rule-intellirule-short_keysnone-config) from intelli_suggetion
+1. Import `add_intelli_rules` from intelli_suggetion
     
     In your_intelli_rule.py, create a `init_rule` function. Import the `add_intelli_rules`function from the 
     `intelli_suggetion` module.
@@ -122,28 +126,33 @@ Let's create a stable-diffusion-webui extension project. Its structure will be a
 ### Full code:
 ```python
 from modules import script_callbacks
+
 def custom_rule_init():
     from intelli_suggetion.intelli import KeywordIntelliRule
     from intelli_suggetion.intelli import add_intelli_rules
-    class YourCustomKeywordIntelliRul(KeywordIntelliRule):
+
+    class YourCustomKeywordIntelliRule(KeywordIntelliRule):
         def __init__(self):
-            super().__init__(your_custom_name, your_rule_id)
-            self.keywords = load_your_keywords()
-        def intelli(self, key : str, max_result : int):
-            # Optional: Your custom Intelli algorithm
-            return your_result_list
+            super().__init__("Test", 'intelli_your_custom_name')
+            self.keywords = ["a", "b", "c"]
 
-        def on_search(self, query : str, current_keyword : str, found : list, result : list):
-            # Optional: Define your on_search callback
-            return found, result, False  # Adjust as needed. (found, result, countine)
-
-        def complete(self, key : str):
-            # Optional: Implement custom completion algorithm
-            return your_complete_result
-
-    add_intelli_rules('test', YourCustomIntelliRule())
+    add_intelli_rules('test', YourCustomKeywordIntelliRule())
 
 script_callbacks.on_before_ui(custom_rule_init)
 ```
+
+### Note: 
+As you can see, this code
+``` python
+    from intelli_suggetion.intelli import KeywordIntelliRule
+    from intelli_suggetion.intelli import add_intelli_rules
+
+    class YourCustomKeywordIntelliRule(KeywordIntelliRule):
+        def __init__(self):
+            super().__init__("Test", 'intelli_your_custom_name')
+            self.keywords = ["a", "b", "c"]
+
+```
+Is placed inside `custom_rule_init`, if you don't do so, you will get an error like `ModuleNotFoundError: No module named 'intelli_suggetion'`, of course it doesn't always happen but this is the safest solution.
 
 This guide is only relatively accurate. Partly due to language differences, there might be some parts that are hard to understand; please bear with me.

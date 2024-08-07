@@ -1,48 +1,41 @@
 import glob
 import json
 import os
+import gradio as gr
 
 from fastapi import FastAPI
 from pathlib import Path
 import pandas as pd
 from intelli_suggetion import utils 
-from intelli_suggetion.intelli import GOLD, PINK_COLOR, RED_COLOR, KeywordIntelliRule 
+from intelli_suggetion.intelli import KeywordIntelliRule 
 from intelli_suggetion.intelli import MapKeywordIntelliRule
 import intelli_suggetion.intelli as intelli
 import scripts.intelli_shared as intelli_shared
-from modules import script_callbacks
-
+from modules import script_callbacks, shared
 class DanbooruIntelliRule(MapKeywordIntelliRule):
 
     def __init__(self):
         super().__init__("Danbooru Intellitor", "intelli_danbooru")
-        csv_df = pd.read_csv(intelli_shared.KEYWORD_FOLDER.joinpath("danbooru_intelli.csv"))
-        csv_df_keyhighlights = pd.read_csv(intelli_shared.KEYWORD_FOLDER.joinpath("danbooru_intelli_highlights.csv"))
         # df_sorted = csv_df.sort_values(by='count', ascending=False)
         # self.keywords = [tag for tag in df_sorted["tag"]]
+        self.keywords = []
+        intelli_shared.INTELLI_CONFIG[self.rule_id] = shared.OptionInfo(
+            "", "Extend Tags - Fill in here the tag you want to add to the Danbooru Rule, tags are separated by ',' Example: 'ling,4k,...'", gr.Textbox, onchange=self.on_config
+        )
 
+        self.load()
+
+    def load(self):
+        csv_df = pd.read_csv(intelli_shared.KEYWORD_FOLDER.joinpath("danbooru_intelli.csv"))
         for tag, count, _ in csv_df.values:
             self.keywords.append((tag, count))
+    
+    def on_config(self):
+        _tmp_keys = shared.opts.intelli_danbooru.split(",")
+        self.keywords = []
+        self.keywords = [(tag.strip(), 99999999) for tag in _tmp_keys]
 
-        self.config = intelli.create_defaut_intelli_rule_config(self.rule_id, {
-            "extends" : []
-        })
-
-        self.highlight = {
-            "masterpiece" : GOLD,
-            "best quality" : GOLD
-        }
-
-        for tag, color in csv_df_keyhighlights.values:
-            self.highlight[tag] = color
-
-        for extend in self.config["extends"]:
-            self.keywords.append((extend, 999999))
-
-    def get_highlight(self, key: str) -> str:
-        key = self.remove_rule_name(key)
-        return self.highlight.get(key, "#FFFFFF")
-        
+        self.load()
 
     def complete(self, key : str):
         key = self.remove_rule_name(key)
@@ -104,13 +97,17 @@ class TextualInversionIntelliRule(KeywordIntelliRule):
         return super().intelli(key, max_result)
 
 def init():
-
-    if os.path.exists(intelli_shared.INTELLI_RULE_CONFIG_PATHS) == True:
-        with open(intelli_shared.INTELLI_RULE_CONFIG_PATHS, 'r') as f:
-            intelli.idx2intelli_rule_configs = json.load(f)
-
     intelli.add_intelli_rules("dan", DanbooruIntelliRule(), short_keys=["_"])
     intelli.add_intelli_rules("lora", LoraIntelliRule())
     intelli.add_intelli_rules("ti", TextualInversionIntelliRule())
+    print("Intelli Rules Loaded")
+
+    print(intelli.intelli_command_rules)
+
+def unload():
+    intelli.idx2intelli_rules = {}
+    intelli.intelli_command_rules = {}
+    print("Intelli Rules Unloaded")
 
 script_callbacks.on_before_ui(init)
+script_callbacks.on_before_reload(unload)

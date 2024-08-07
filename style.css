@@ -1,6 +1,4 @@
-:root {
-    --intelli-select-background-color: #38393d
-}
+
 
 .auto-complete-container {
     position: absolute;
@@ -26,11 +24,13 @@
 }
 
 .auto-complete-container .tag-element.select {
-    background-color: var(--intelli-select-background-color);
+    background-color: var(--button-secondary-background-fill-hover);
+    color: var(--button-primary-text-color-hover);
     border-radius: 6px;
 }
 
 .auto-complete-container .tag-element:hover {
-    background-color: var(--intelli-select-background-color);
+    background-color: var(--button-secondary-background-fill-hover);
+    color: var(--button-primary-text-color-hover);
     border-radius: 6px;
 }

@@ -133,12 +133,14 @@ class AutoCompleteField {
             
             _selectIndex = clamp(_selectIndex, 0, autoCompleteContainer.childNodes.length - 1)
             
-            if (e.ctrlKey && e.key == ' ') {
+            if (e.shiftKey && e.key == ' ') {
+                e.preventDefault();
 
                 autoCompleteContainer.style.display = "flex";
                 _keyword = getWordNearCursor(textarea, opts['intelli_word_padding']);
 
                 onInputFunc(_keyword, textarea, autoCompleteContainer);
+                
                 return;
             }
 
@@ -265,11 +267,6 @@ function suggestionWord(k, textarea, autoCompleteContainer, tags) {
         const tagElement = document.createElement("div");
 
         tagElement.innerText = tags[index];
-        let tag = tags[index];
-        var tagText = tag[0];
-        var tagHighlight = tag[1];
-        tagElement.innerText = tagText;
-        tagElement.style.color = tagHighlight;
         tagElement.classList.add("tag-element");
         autoCompleteContainer.appendChild(tagElement);
 

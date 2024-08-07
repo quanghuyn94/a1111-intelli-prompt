@@ -46,6 +46,11 @@ class IntelliRule:
         
         return part1_split + [part2_float]
 
+    def on_config(self):
+        """
+        Placeholder method for handling configuration updates.
+        """
+        pass
 
     def intelli(self, key: str, max_result: int):
         """
@@ -72,19 +77,6 @@ class IntelliRule:
         """
         pass
 
-    def get_highlight(self, key: str) -> str:
-        """
-        Placeholder method for getting the highlight for the given key.
-
-        Parameters:
-        - key (str): The hierarchical key to be highlighted.
-
-        Returns:
-        - str: The highlighted key.
-        """
-
-        return "#FFFFFF"
-
     def remove_rule_name(self, key : str):
         """Remove the rule name from the key.
 
@@ -99,15 +91,6 @@ class IntelliRule:
 class KeywordIntelliRule(IntelliRule):
     """
     A rule class for intelligent keyword-based completion.
-
-    Attributes:
-    - keywords (list): A list to store keywords for intelligent completion.
-
-    Methods:
-    - __init__(self, name, rule_id): Initializes an instance of KeywordIntelliRule.
-    - intelli(self, key, max_result): Performs intelligent completion based on keywords.
-    - on_search(self, query, current_keyword, found, result): Callback function for search.
-    - complete(self, key: str): Completes the provided key based on rule specifications.
     """
 
     keywords : list[str] = []
@@ -144,11 +127,6 @@ class KeywordIntelliRule(IntelliRule):
 
             for keyword in self.keywords:
 
-                found, result, skip = self.on_search(query, keyword, found, result)
-
-                if skip == True:
-                    continue
-
                 if query == keyword:
                     found.insert(0, f"{self.rule_command}.{keyword}")
                     continue
@@ -161,25 +139,10 @@ class KeywordIntelliRule(IntelliRule):
                     result.append(f"{self.rule_command}.{keyword}")
 
             if strength:
-                return [(f"{x}::{strength}", self.get_highlight(x)) for x in found + result][0:max_result]
-            return [(x, self.get_highlight(x)) for x in found + result][0:max_result]
+                return [f"{x}::{strength}" for x in found + result][0:max_result]
+            return [x for x in found + result][0:max_result]
 
         return []
-
-    def on_search(self, query : str, current_keyword : str, found : list, result : list) -> tuple[list, list, bool]:
-        """
-        Callback function. The function must return the tuple in the order found: list, result: list, skip: boolean.
-
-        Args:
-        - query (str): The search query.
-        - current_keyword (str): The current keyword being processed.
-        - found (list): The list of already found results.
-        - result (list): The list of partial results.
-
-        Returns:
-        A tuple (found, result, skip).
-        """
-        return found, result, False
 
     def complete(self, key: str):
         """
@@ -205,9 +168,6 @@ class MapKeywordIntelliRule(IntelliRule):
     A rule class for intelligent keyword-based completion.
     This rule store the keyword with the count.
     Result will be sorted by the count.
-
-    Attributes:
-    - keywords (list): A list to store keywords for intelligent completion.
 
     """
     keywords : list[tuple[str, int]] = []
@@ -266,8 +226,8 @@ class MapKeywordIntelliRule(IntelliRule):
 
             result_map = map_firts_found + map_level_1 + map_level_2 + map_found
             if strength:
-                return [(f"{x[0]}::{strength}", self.get_highlight(x[0])) for x in result_map][0:max_result]
-            return [(x[0], self.get_highlight(x[0])) for x in result_map][0:max_result]
+                return [f"{x[0]}::{strength}" for x in result_map][0:max_result]
+            return [x[0] for x in result_map][0:max_result]
 
         return []
 
@@ -290,14 +250,10 @@ class MapKeywordIntelliRule(IntelliRule):
 
         return f"{key} "
 
-RED_COLOR = "#FF0000"
-PINK_COLOR = "#FF00FF"
-GOLD = "#FFD700"
-DEFAULT_RULE = "intelli_danbooru"
+DEFAULT_RULE = "dan"
 
 intelli_command_rules : dict[str, str] = {}
 idx2intelli_rules : dict[str, IntelliRule] = {}
-idx2intelli_rule_configs : dict[str, dict] = {}
 
 def get_suggestion_rules(key: str, max_result: int):
     """
@@ -312,21 +268,19 @@ def get_suggestion_rules(key: str, max_result: int):
     """
     suggestion_rules = []
     if utils.check_syntax(key) != None:
-        return [(utils.check_syntax(key), RED_COLOR)]
+        return [utils.check_syntax(key)]
     
     if len(key) < 1:
-        return list([(x, GOLD) for x in intelli_command_rules.keys()])[0:max_result]
+        return list([x for x in intelli_command_rules.keys()])[0:max_result]
     
-    if not "." in key:
+    if not "." in key or utils.check_dot_before(key) == False:
         for rule, rule_id in intelli_command_rules.items():
             if len(suggestion_rules) > max_result:
                 break
             if utils.is_subsequence(key, rule) == True:
-                suggestion_rules.append((rule, GOLD))
-
-        if len(suggestion_rules)  < 1:
-            rule = idx2intelli_rules[DEFAULT_RULE]
-            suggestion_rules.extend(rule.intelli(f"{rule.rule_command}.{key}", max_result))
+                suggestion_rules.append(rule)
+        if len(suggestion_rules) < 1:
+            suggestion_rules.extend(idx2intelli_rules[intelli_command_rules[DEFAULT_RULE]].intelli(f"{DEFAULT_RULE}.{key}", max_result))
 
     else:
         for rule, rule_id in intelli_command_rules.items():
@@ -338,8 +292,8 @@ def get_suggestion_rules(key: str, max_result: int):
                 break
     
                 
-    if "::" in key and len(suggestion_rules) < 1:
-        suggestion_rules.insert(0, (key, PINK_COLOR))
+    if "::" in key:
+        suggestion_rules.insert(0, key)
 
     return suggestion_rules
 
@@ -399,70 +353,10 @@ def add_intelli_rules(key, rule: IntelliRule, short_keys=None):
     # Associate the key with the IntelliRule ID
     intelli_command_rules[key] = rule.rule_id
 
-    # Add configuration if not already present
-    if rule.rule_id not in idx2intelli_rule_configs:
-        idx2intelli_rule_configs[rule.rule_id] = {}
-
     # Associate short keys with the same IntelliRule
     if short_keys:
         for short_key in short_keys:
             intelli_command_rules[short_key] = rule.rule_id
-
-
-def get_intelli_rule_config(rule_id):
-    """
-    Get an IntelliRule config.
-
-    Parameters:
-    - rule_name (str): The name of IntelliRule.
-
-    Returns:
-    - dict : The IntelliRule config.
-    """
-    if not rule_id in idx2intelli_rule_configs:
-        return None
-
-
-    return idx2intelli_rule_configs[rule_id]
-
-def set_intelli_rule_config(rule_id : str, config : dict):
-    """
-    Set an IntelliRule config.
-
-    Parameters:
-    - rule_id (str): The name of IntelliRule.
-    - config (dict): The config of IntelliRule.
-
-    Returns:
-    - dict : The IntelliRule config.
-    """
-    if not rule_id in idx2intelli_rule_configs:
-        return None
-
-    idx2intelli_rule_configs[rule_id] = config
-
-def create_defaut_intelli_rule_config(rule_id : str, config : dict):
-    """
-    Create an defaut IntelliRule config.
-
-    Parameters:
-    - rule_id (str): The name of IntelliRule.
-    - config (dict): The config of IntelliRule.
-
-    Returns:
-    - dict : The IntelliRule config.
-    """
-    if not rule_id in idx2intelli_rule_configs:
-        idx2intelli_rule_configs[rule_id] = {}
-
-    config.update(idx2intelli_rule_configs[rule_id])
-    idx2intelli_rule_configs[rule_id] = config
-
-    return idx2intelli_rule_configs[rule_id]
-
-def save_intelli_rule_configs(path : str):
-    with open(path, 'w') as f:
-        json.dump(idx2intelli_rule_configs, f, indent=4)
 
 
     
