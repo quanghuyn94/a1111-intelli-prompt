@@ -1,13 +1,5 @@
 let promptHistoryStack = [];
-const INTELLI_HOTKEY_OPTS = {
-    "move_up" : "ArrowUp",
-    "move_down" : "ArrowDown",
-    "move_left" : "ArrowLeft",
-    "move_right" : "ArrowRight",
-    "close_suggetion_table" : "Escape",
-    "complete_keyword": "Tab",
-    "undo": "z"
-}
+
 /**
  * Selects an item in the suggestion container at the specified index.
  *
@@ -49,8 +41,36 @@ function clamp(value, min, max) {
     return value;
 }
 
-function checkHotkey(key) {
-    return Object.values(INTELLI_HOTKEY_OPTS).includes(key);
+/**
+ * Checks if the event key matches the specified hotkey.
+ * @param {KeyboardEvent} event 
+ * @returns 
+ */
+function checkKeys(event) {
+    var INTELLI_HOTKEY_OPTS = [
+        'intelli_move_up',
+        'intelli_move_down',
+        'intelli_move_right',
+        'intelli_close_suggetion_table',
+        'intelli_complete_keyword',
+        'intelli_open_suggetion_table',
+        'intelli_undo'
+    ]
+    
+    for (var i = 0; i < INTELLI_HOTKEY_OPTS.length; i++) {
+        if (checkHotKey(event, INTELLI_HOTKEY_OPTS[i])) {
+            return true;
+        }
+    }
+
+    if (event.ctrlKey) return true;
+    if (event.altKey) return true;
+    if (event.shiftKey) return true;
+    if (event.metaKey) return true;
+
+    if (isModifierKey(event.key)) return true;
+
+    return false;
 }
 
 function checkElementPosition(element, elementContainer) {
@@ -91,6 +111,69 @@ function scrollToSelectedElement(targetContainerElement) {
 
 };
 
+function isModifierKey(key) {
+    return ['Control', 'Alt', 'Shift', 'Meta'].includes(key);
+}
+
+function getPressedKeys(event) {
+    const keys = [];
+    if (event.ctrlKey) keys.push('Control');
+    if (event.altKey) keys.push('Alt');
+    if (event.shiftKey) keys.push('Shift');
+    if (event.metaKey) keys.push('Meta');
+    keys.push(event.key);
+    return keys;
+}
+  
+  function isValidKeyCombo(event) {
+        const keys = getPressedKeys(event);
+        
+        // Check if all keys are either modifier keys or a single non-modifier key
+        let nonModifierKeyCount = 0;
+    
+        for (const key of keys) {
+            if (!isModifierKey(key)) {
+                nonModifierKeyCount++;
+            }
+        }
+    
+        // Return true if there is exactly one non-modifier key and at least one modifier key
+        return nonModifierKeyCount === 1 && keys.length > 1;
+}
+
+function checkComboKey(event, comboKeys) {
+    const pressedKeys = getPressedKeys(event);
+  
+    // Normalize the key names
+    const normalizedComboKeys = comboKeys.map(key => key === 'Ctrl' ? 'Control' : key);
+  
+    // Check if the pressed keys match the combo keys
+    const keysMatch = normalizedComboKeys.every(key => pressedKeys.includes(key));
+    
+    return keysMatch && pressedKeys.length === normalizedComboKeys.length;
+}
+/**
+ * Checks if the event key matches the specified hotkey.
+ * @param {KeyboardEvent} event - The keyboard event.
+ * @param {string} opts_key - The hotkey to be checked.
+ */
+function checkHotKey(event, opts_key) {
+    var key = opts[opts_key];
+
+    if (key == "None") {
+        return false;
+    }
+
+    if (key.includes("+")) {
+        /**
+         * @type {string[]}
+         */
+        var keys = key.split("+");
+        return checkComboKey(event, keys);
+    }
+
+    return event.key == key;
+}
 /**
  * Represents an AutoCompleteField that enhances a textarea with autocomplete suggestions.
  *
@@ -120,49 +203,46 @@ class AutoCompleteField {
         
         textarea.addEventListener('keydown', (e) => {
             _focus = true;
-            if (e.key == INTELLI_HOTKEY_OPTS["move_up"]) {
+            if (checkHotKey(e, "intelli_move_up")) {
                 e.preventDefault();
                 _selectIndex--;
             }
 
-            if (e.key == INTELLI_HOTKEY_OPTS["move_down"]) {
+            if (checkHotKey(e, "intelli_move_down")) {
                 e.preventDefault();
                 _selectIndex++;
             }
 
             
-            _selectIndex = clamp(_selectIndex, 0, autoCompleteContainer.childNodes.length - 1)
-            
-            if (e.shiftKey && e.key == ' ') {
-                e.preventDefault();
+            _selectIndex = clamp(_selectIndex, 0, autoCompleteContainer.childNodes.length - 1);
 
+            if (checkHotKey(e, "intelli_open_suggetion_table")) {
                 autoCompleteContainer.style.display = "flex";
                 _keyword = getWordNearCursor(textarea, opts['intelli_word_padding']);
-
+                _selectIndex = 0;
                 onInputFunc(_keyword, textarea, autoCompleteContainer);
-                
                 return;
             }
 
-            if (e.key == INTELLI_HOTKEY_OPTS["close_suggetion_table"]) {
+            if (checkHotKey(e, "intelli_close_suggetion_table")) {
                 autoCompleteContainer.style.display = "none";
                 return;
             }
 
-            if (e.key == INTELLI_HOTKEY_OPTS["complete_keyword"]) {
+            if (checkHotKey(e, "intelli_complete_keyword")) {
                 e.preventDefault();
                 autoCompleteContainer.childNodes[_selectIndex].click();
                 autoCompleteContainer.style.display = "none";
                 return;
             }
 
-            if (e.key == INTELLI_HOTKEY_OPTS["move_right"] && autoCompleteContainer.style.display == "flex") {
+            if (checkHotKey(e, "intelli_move_right") && autoCompleteContainer.style.display == "flex") {
                 e.preventDefault();
                 autoCompleteContainer.childNodes[_selectIndex].leftInput(autoCompleteContainer.childNodes[_selectIndex]);
                 return;
             }
 
-            if (e.key == INTELLI_HOTKEY_OPTS["undo"] && e.ctrlKey) {
+            if (checkHotKey(e, "intelli_undo") && e.ctrlKey) {
                 if (promptHistoryStack.length > 0) {
                     textarea.value = promptHistoryStack.pop();
                     updateInput(textarea);
@@ -180,12 +260,13 @@ class AutoCompleteField {
                 return;
             }
 
-            if (checkHotkey(e.key)) return;
+            if (checkKeys(e)) return;
 
             _selectIndex = 0;
             _keyword = getWordNearCursor(textarea, opts['intelli_word_padding']);
 
             onInputFunc(_keyword, textarea, autoCompleteContainer);
+            
         })
 
         textarea.addEventListener("click", (e) => {
@@ -294,7 +375,7 @@ function suggestionWord(k, textarea, autoCompleteContainer, tags) {
                 // Hide the auto-complete container after selection
                 autoCompleteContainer.style.display = "none";
 
-                promptHistoryStack.push(textarea.value);
+                pushHistory(textarea);
             }
 
             
@@ -315,7 +396,7 @@ function suggestionWord(k, textarea, autoCompleteContainer, tags) {
                 }
 
                 replaceWordAtCursor(textarea, tag, opts['intelli_word_padding']);
-                promptHistoryStack.push(textarea.value);
+                pushHistory(textarea);
             }
             
         }

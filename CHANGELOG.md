@@ -1,3 +1,7 @@
+# 1.1.2
+## Features:
+- Allows you to customize a few hotkeys.
+
 # 1.1.1
 ## Features:
 - Remove Highlight System.

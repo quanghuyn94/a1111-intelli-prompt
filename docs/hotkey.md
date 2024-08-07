@@ -5,5 +5,4 @@
 | `↑` and `↓`        | Navigate between suggestions                 |
 | `Tab` or `click`  | Auto-complete                                |
 | `Esc`            | Close suggestion content                     |
-| `Shift` + `Space`   | Open suggestion content                      |
 | `→`| Fill with current suggestion |

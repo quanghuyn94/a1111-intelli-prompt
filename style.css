@@ -1,4 +1,15 @@
 
+:root, .dark {
+    --tag-color: #ffffff;
+    --tag-selected-color: #ffffff;
+    --tag-selected-background-color: #595959;
+}
+
+:root {
+    --tag-color: #000000;
+    --tag-selected-color: #ffffff;
+    --tag-selected-background-color: #595959;
+}
 
 .auto-complete-container {
     position: absolute;
@@ -7,7 +18,7 @@
     border: var(--input-border-width) solid var(--input-border-color);
     border-radius: 6px;
     z-index: 999;
-    background-color: var(--body-background-fill);
+    background-color: var(--background-fill-primary);
     padding: 4px;
     overflow-y: auto;
     overflow-x: hidden;
@@ -21,16 +32,18 @@
     min-width: 150px;
     margin: 2px;
     padding: 2px;
+    background-color: transparent;
+    color: var(--tag-color);
 }
 
 .auto-complete-container .tag-element.select {
-    background-color: var(--button-secondary-background-fill-hover);
-    color: var(--button-primary-text-color-hover);
+    background-color: var(--tag-selected-background-color);
+    color: var(--tag-selected-color);
     border-radius: 6px;
 }
 
 .auto-complete-container .tag-element:hover {
-    background-color: var(--button-secondary-background-fill-hover);
-    color: var(--button-primary-text-color-hover);
+    background-color: var(--tag-selected-background-color);
+    color: var(--tag-selected-color);
     border-radius: 6px;
 }

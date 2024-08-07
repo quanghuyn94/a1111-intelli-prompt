@@ -16,6 +16,12 @@ INTELLI_CONFIG = {
     "intelli_word_padding" : shared.OptionInfo(" ", "Word padding.", gr.Textbox),
     "intelli_max_result" : shared.OptionInfo(5, "Max result of Intelli Search.", gr.Number),
     "intelli_max_history_length" : shared.OptionInfo(1000, "Maximum amount of history stored.", gr.Number),
+    "intelli_move_up": shared.OptionInfo("ArrowUp", "Move up key. (Enter the character as javascript key)", gr.Textbox),
+    "intelli_move_down": shared.OptionInfo("ArrowDown", "Move down key. (Enter the character as javascript key)", gr.Textbox),
+    "intelli_move_right": shared.OptionInfo("ArrowRight", "Fill with current suggestion key. (Enter the character as javascript key)", gr.Textbox),
+    "intelli_close_suggetion_table": shared.OptionInfo("Escape", "Close suggetion table key. (Enter the character as javascript key)", gr.Textbox),
+    "intelli_complete_keyword": shared.OptionInfo("Tab", "Complete suggetion key. (Enter the character as javascript key)", gr.Textbox),
+    "intelli_undo": shared.OptionInfo("Ctrl+z", "Undo key. (Enter the character as javascript key)", gr.Textbox),
 }
 
 with open(VERSION_PATH, 'r') as f:
