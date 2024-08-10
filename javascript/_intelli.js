@@ -160,7 +160,7 @@ function checkComboKey(event, comboKeys) {
 function checkHotKey(event, opts_key) {
     var key = opts[opts_key];
 
-    if (key == "None") {
+    if (key == "None" || key == null) {
         return false;
     }
 

@@ -19,6 +19,7 @@ INTELLI_CONFIG = {
     "intelli_move_up": shared.OptionInfo("ArrowUp", "Move up key. (Enter the character as javascript key)", gr.Textbox),
     "intelli_move_down": shared.OptionInfo("ArrowDown", "Move down key. (Enter the character as javascript key)", gr.Textbox),
     "intelli_move_right": shared.OptionInfo("ArrowRight", "Fill with current suggestion key. (Enter the character as javascript key)", gr.Textbox),
+    "intelli_open_suggetion_table": shared.OptionInfo("Ctrl+/", "Open suggetion table key. (Enter the character as javascript key)", gr.Textbox),
     "intelli_close_suggetion_table": shared.OptionInfo("Escape", "Close suggetion table key. (Enter the character as javascript key)", gr.Textbox),
     "intelli_complete_keyword": shared.OptionInfo("Tab", "Complete suggetion key. (Enter the character as javascript key)", gr.Textbox),
     "intelli_undo": shared.OptionInfo("Ctrl+z", "Undo key. (Enter the character as javascript key)", gr.Textbox),

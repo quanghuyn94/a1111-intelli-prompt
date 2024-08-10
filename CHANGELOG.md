@@ -1,3 +1,7 @@
+# 1.1.3
+## Features:
+- Hotfix keys input.
+
 # 1.1.2
 ## Features:
 - Allows you to customize a few hotkeys.
