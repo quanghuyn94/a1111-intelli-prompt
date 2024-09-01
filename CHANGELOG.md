@@ -1,3 +1,7 @@
+# 1.1.4
+## Features:
+- Fix undo.
+
 # 1.1.3
 ## Features:
 - Hotfix keys input.

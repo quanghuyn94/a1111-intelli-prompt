@@ -1,4 +1,4 @@
-let promptHistoryStack = [];
+
 
 /**
  * Selects an item in the suggestion container at the specified index.
@@ -191,6 +191,8 @@ class AutoCompleteField {
      */
     constructor(element, onInputFunc) {
         this.element = element;
+        this.historyStack = [];
+        var instance = this;
         var autoCompleteContainer = this.createSuggestionContainer();
         const textarea = element.querySelector(`textarea`);
 
@@ -220,7 +222,7 @@ class AutoCompleteField {
                 autoCompleteContainer.style.display = "flex";
                 _keyword = getWordNearCursor(textarea, opts['intelli_word_padding']);
                 _selectIndex = 0;
-                onInputFunc(_keyword, textarea, autoCompleteContainer);
+                onInputFunc(_keyword, textarea, autoCompleteContainer, instance);
                 return;
             }
 
@@ -242,11 +244,9 @@ class AutoCompleteField {
                 return;
             }
 
-            if (checkHotKey(e, "intelli_undo") && e.ctrlKey) {
-                if (promptHistoryStack.length > 0) {
-                    textarea.value = promptHistoryStack.pop();
-                    updateInput(textarea);
-                }
+            if (checkHotKey(e, "intelli_undo")) {
+                textarea.value = instance.getHistory();
+                updateInput(textarea);
             }
 
             select(autoCompleteContainer, _selectIndex);
@@ -264,8 +264,8 @@ class AutoCompleteField {
 
             _selectIndex = 0;
             _keyword = getWordNearCursor(textarea, opts['intelli_word_padding']);
-
-            onInputFunc(_keyword, textarea, autoCompleteContainer);
+            
+            onInputFunc(_keyword, textarea, autoCompleteContainer, instance);
             
         })
 
@@ -302,6 +302,28 @@ class AutoCompleteField {
 
         return autoCompleteContainer;
     }
+
+    /**
+     * Pushes the current input text to the history stack.
+     * @param {HTMLTextAreaElement} textarea - The HTML textarea element where the user is entering text.
+     */
+    pushHistory(textarea) {
+        this.historyStack.push(textarea.value);
+        if (this.historyStack.length > opts['intelli_max_history']) {
+            this.historyStack.shift();
+        }
+    }
+
+    /**
+     * Gets the last input text from the history stack.
+     * @returns {string} - The last input text from the history stack.
+     */
+    getHistory() {
+        if (this.historyStack.length > 0) {
+            return this.historyStack.pop();
+        }
+        return "";
+    }
 }
 
 async function getKeywords(key, max) {
@@ -323,9 +345,10 @@ async function completeKeywords(key) {
  * @param {HTMLInputElement} textarea - The HTML input element (usually a textarea) where the user is entering text.
  * @param {HTMLDivElement} autoCompleteContainer - The HTML div element that serves as the container for displaying auto-complete suggestions.
  * @param {string[]} tags - An array of strings representing suggested keywords to be displayed in the auto-complete container.
+ * @param {AutoCompleteField} autoCompleteField - The AutoCompleteField instance that manages the auto-complete functionality.
  * @returns {void}
  */
-function suggestionWord(k, textarea, autoCompleteContainer, tags) {
+function suggestionWord(k, textarea, autoCompleteContainer, tags, autoCompleteField) {
     // Get the pixel position of the cursor within the textarea
 
     var cursorPixelPosition = TextareaCaretCoordinatesUtils.getCaretCoordinates(textarea, textarea.selectionEnd);
@@ -374,8 +397,7 @@ function suggestionWord(k, textarea, autoCompleteContainer, tags) {
 
                 // Hide the auto-complete container after selection
                 autoCompleteContainer.style.display = "none";
-
-                pushHistory(textarea);
+                autoCompleteField.pushHistory(textarea);
             }
 
             
@@ -396,7 +418,7 @@ function suggestionWord(k, textarea, autoCompleteContainer, tags) {
                 }
 
                 replaceWordAtCursor(textarea, tag, opts['intelli_word_padding']);
-                pushHistory(textarea);
+                autoCompleteField.pushHistory(textarea);
             }
             
         }
@@ -406,23 +428,18 @@ function suggestionWord(k, textarea, autoCompleteContainer, tags) {
     select(autoCompleteContainer, 0);
 }
 
-function pushHistory(textarea) {
-    promptHistoryStack.push(textarea.value);
-    if (promptHistoryStack.length > opts['intelli_max_history']) {
-        promptHistoryStack.shift();
-    }
-}
 /**
  * Asynchronously suggests keywords for a given input and updates the auto-complete container.
  *
  * @param {string} k - The input keyword for which suggestions are generated.
  * @param {HTMLTextAreaElement} textarea - The HTML textarea element where the user is entering text.
  * @param {HTMLDivElement} autoCompleteContainer - The HTML div element that serves as the container for displaying auto-complete suggestions.
+ * @param {AutoCompleteField} autoCompleteField - The AutoCompleteField instance that manages the auto-complete functionality.
  * @returns {Promise<void>}
  */
-async function suggestionWordAsync(k, textarea, autoCompleteContainer) {
+async function suggestionWordAsync(k, textarea, autoCompleteContainer, autoCompleteField) {
     let response = await getKeywords(k, opts['intelli_max_result']);
-
+    
     // If no suggestions are received, hide the auto-complete container and return
     if (response.length < 1) {
         autoCompleteContainer.style.display = "none";
@@ -430,5 +447,5 @@ async function suggestionWordAsync(k, textarea, autoCompleteContainer) {
     };
 
     // Display suggestions in the auto-complete container
-    suggestionWord(k, textarea, autoCompleteContainer, response);
+    suggestionWord(k, textarea, autoCompleteContainer, response, autoCompleteField);
 }
